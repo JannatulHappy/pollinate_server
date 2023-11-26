@@ -57,6 +57,7 @@ async function run() {
 
     const usersCollection = client.db("pollinateDb").collection("users");
     const paymentsCollection = client.db("pollinateDb").collection("payments");
+    const surveysCollection = client.db("pollinateDb").collection("surveys");
 
     // auth related api
     app.post("/jwt", async (req, res) => {
@@ -147,6 +148,27 @@ async function run() {
       const payment = req.body;
       const result = await paymentsCollection.insertOne(payment);
       // todo: send email to booking owner
+      res.send(result);
+    });
+
+    // survey related api
+    app.get("/surveys", async (req, res) => {
+      const result = await surveysCollection.find().toArray();
+      res.send(result);
+    });
+    // update pro user status to pro-user
+    app.put("/user/status/:email", async (req, res) => {
+      const email = req.params.email
+      const status = req.body.status;
+      const query = {
+       email:email,
+      };
+      const updateDoc = {
+        $set: {
+          role: status,
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc);
       res.send(result);
     });
     // Send a ping to confirm a successful connection
