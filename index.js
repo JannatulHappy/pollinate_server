@@ -26,7 +26,22 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev"));
-
+// middleware
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token;
+  console.log(token);
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (err, decoded) => {
+    if (err) {
+      console.log(err);
+      return res.status(401).send({ message: "unauthorized access" });
+    }
+    req.user = decoded;
+    next();
+  });
+};
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.wlf4d.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   serverApi: {
@@ -41,6 +56,7 @@ async function run() {
     // await client.connect();
 
     const usersCollection = client.db("pollinateDb").collection("users");
+    const paymentsCollection = client.db("pollinateDb").collection("payments");
 
     // auth related api
     app.post("/jwt", async (req, res) => {
@@ -105,6 +121,32 @@ async function run() {
         },
         options
       );
+      res.send(result);
+    });
+
+    // payment related
+    // payment intent-generate client secret for stripe payment
+    app.post("/create-payment-intent", verifyToken, async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      console.log(amount, "amount inside the intent");
+      if (!price || amount < 1) return;
+
+      const { client_secret } = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: client_secret,
+      });
+    });
+    // save payment info in payment collection
+    app.post("/payments", verifyToken, async (req, res) => {
+      const payment = req.body;
+      const result = await paymentsCollection.insertOne(payment);
+      // todo: send email to booking owner
       res.send(result);
     });
     // Send a ping to confirm a successful connection
