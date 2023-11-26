@@ -13,7 +13,11 @@ const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
 // middleware
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://pollinate-01.web.app",
+  ],
   credentials: true,
   optionSuccessStatus: 200,
 };
@@ -48,7 +52,7 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Hello from Pollinate Server..");
+  res.send("Hello from Pollinate Server to vercel..");
 });
 
 app.listen(port, () => {
