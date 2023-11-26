@@ -37,7 +37,42 @@ const client = new MongoClient(uri, {
 });
 async function run() {
   try {
-    console.log("going on");
+    // Connect the client to the server	(optional starting in v4.7)
+    // await client.connect();
+
+    const usersCollection = client.db("pollinateDb").collection("users");
+
+    // auth related api
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      console.log("I need a new jwt", user);
+      const token = jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, {
+        expiresIn: "365d",
+      });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
+
+    // Logout
+    app.get("/logout", async (req, res) => {
+      try {
+        res
+          .clearCookie("token", {
+            maxAge: 0,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+          })
+          .send({ success: true });
+        console.log("Logout successful");
+      } catch (err) {
+        res.status(500).send(err);
+      }
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
