@@ -124,7 +124,27 @@ async function run() {
       );
       res.send(result);
     });
-
+    // update pro user status to pro-user
+    app.put("/user/status/:email", async (req, res) => {
+      const email = req.params.email;
+      const status = req.body.status;
+      const query = {
+        email: email,
+      };
+      const updateDoc = {
+        $set: {
+          role: status,
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+    // get specific user
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await usersCollection.findOne({ email: email });
+      res.send(result);
+    });
     // payment related
     // payment intent-generate client secret for stripe payment
     app.post("/create-payment-intent", verifyToken, async (req, res) => {
@@ -152,23 +172,15 @@ async function run() {
     });
 
     // survey related api
+    // get all survey
     app.get("/surveys", async (req, res) => {
       const result = await surveysCollection.find().toArray();
       res.send(result);
     });
-    // update pro user status to pro-user
-    app.put("/user/status/:email", async (req, res) => {
-      const email = req.params.email
-      const status = req.body.status;
-      const query = {
-       email:email,
-      };
-      const updateDoc = {
-        $set: {
-          role: status,
-        },
-      };
-      const result = await usersCollection.updateOne(query, updateDoc);
+    // get single survey
+    app.get("/surveys/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await surveysCollection.findOne({ _id: new ObjectId(id) });
       res.send(result);
     });
     // Send a ping to confirm a successful connection
