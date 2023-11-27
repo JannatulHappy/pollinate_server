@@ -59,7 +59,7 @@ async function run() {
     const paymentsCollection = client.db("pollinateDb").collection("payments");
     const surveysCollection = client.db("pollinateDb").collection("surveys");
 
-    // auth related api
+    // -------auth related api---------
     app.post("/jwt", async (req, res) => {
       const user = req.body;
       console.log("I need a new jwt", user);
@@ -74,7 +74,6 @@ async function run() {
         })
         .send({ success: true });
     });
-
     // Logout
     app.get("/logout", async (req, res) => {
       try {
@@ -145,7 +144,7 @@ async function run() {
       const result = await usersCollection.findOne({ email: email });
       res.send(result);
     });
-    // payment related
+    // -----payment related-----
     // payment intent-generate client secret for stripe payment
     app.post("/create-payment-intent", verifyToken, async (req, res) => {
       const { price } = req.body;
@@ -171,7 +170,7 @@ async function run() {
       res.send(result);
     });
 
-    // survey related api
+    // ------survey related api-------
     // get all survey
     app.get("/surveys", async (req, res) => {
       const result = await surveysCollection.find().toArray();
@@ -183,11 +182,11 @@ async function run() {
       const result = await surveysCollection.findOne({ _id: new ObjectId(id) });
       res.send(result);
     });
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // // Send a ping to confirm a successful connection
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
