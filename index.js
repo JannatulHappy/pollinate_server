@@ -169,7 +169,12 @@ async function run() {
       // todo: send email to booking owner
       res.send(result);
     });
-
+    // get all payments
+    // get all survey
+    app.get("/payments", async (req, res) => {
+      const result = await paymentsCollection.find().toArray();
+      res.send(result);
+    });
     // ------survey related api-------
     // get all survey
     app.get("/surveys", async (req, res) => {
