@@ -7,7 +7,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 // const nodemailer = require('nodemailer');
 const morgan = require("morgan");
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 9000;
 
 const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
@@ -180,6 +180,32 @@ async function run() {
     app.get("/surveys/:id", async (req, res) => {
       const id = req.params.id;
       const result = await surveysCollection.findOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+    // update specific surveys after vote
+    app.put("/surveys/update/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      console.log(id, data);
+      const filter = {
+        _id: new ObjectId(id),
+      };
+      const options = { upsert: true };
+      const updatedData = {
+        $set: {
+          like: data.like,
+          dislike: data.dislike,
+          totalVote: data.totalVote,
+          Feedback: data.Feedback,
+          responses: data.responses,
+        },
+      };
+      const result = await surveysCollection.updateOne(
+        filter,
+        updatedData,
+        options
+      );
+      console.log(result);
       res.send(result);
     });
     // // Send a ping to confirm a successful connection
