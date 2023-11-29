@@ -193,19 +193,19 @@ async function run() {
     });
     // get all payments
     // get all survey
-    app.get("/payments",verifyToken, async (req, res) => {
+    app.get("/payments", verifyToken, async (req, res) => {
       const result = await paymentsCollection.find().toArray();
       res.send(result);
     });
     // ------survey related api-------
     // post survey from surveyor dashboard
-   app.post("/survey", verifyToken, async (req, res) => {
-     const survey = req.body;
-     const surveyData = { ...survey, timestamp: Date.now() };
-     console.log(surveyData)
-     const result = surveysCollection.insertOne(survey);
-     res.send(result);
-   });
+    app.post("/survey", verifyToken, async (req, res) => {
+      const survey = req.body;
+      const surveyData = { ...survey, timestamp: Date.now() };
+      console.log(surveyData);
+      const result = surveysCollection.insertOne(survey);
+      res.send(result);
+    });
     // get all survey
     app.get("/surveys", async (req, res) => {
       const result = await surveysCollection.find().toArray();
@@ -248,7 +248,7 @@ async function run() {
     app.patch("/surveys/status/:id", async (req, res) => {
       const id = req.params.id;
       const data = req.body;
-      console.log("new status",id, data);
+      console.log("new status", id, data);
       const filter = {
         _id: new ObjectId(id),
       };
@@ -266,6 +266,17 @@ async function run() {
         options
       );
       console.log(result);
+      res.send(result);
+    });
+    // get specific surveyor survey
+    // To-do: verify host here
+    app.get("/surveyor-survey/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const result = await surveysCollection
+        .find({
+          surveyCreatorEmail: email,
+        })
+        .toArray();
       res.send(result);
     });
     // // Send a ping to confirm a successful connection
