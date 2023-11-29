@@ -123,19 +123,41 @@ async function run() {
       );
       res.send(result);
     });
-    // update pro user status to pro-user
-    app.put("/user/status/:email", async (req, res) => {
+    // // update pro user status to pro-user
+    // app.put("/user/status/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const status = req.body.status;
+    //   const query = {
+    //     email: email,
+    //   };
+    //   const updateDoc = {
+    //     $set: {
+    //       role: status,
+    //     },
+    //   };
+    //   const result = await usersCollection.updateOne(query, updateDoc);
+    //   res.send(result);
+    // });
+    // update user role
+    app.put("/users/update/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
-      const status = req.body.status;
-      const query = {
-        email: email,
-      };
+      const user = req.body;
+      console.log(user);
+      const query = { email: email };
       const updateDoc = {
         $set: {
-          role: status,
+          status: user.status,
+          role: user.role,
         },
       };
       const result = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+    // get all user
+    // todo:verify admin
+
+    app.get("/users", verifyToken, async (req, res) => {
+      const result = await usersCollection.find().toArray();
       res.send(result);
     });
     // get specific user
@@ -171,11 +193,19 @@ async function run() {
     });
     // get all payments
     // get all survey
-    app.get("/payments", async (req, res) => {
+    app.get("/payments",verifyToken, async (req, res) => {
       const result = await paymentsCollection.find().toArray();
       res.send(result);
     });
     // ------survey related api-------
+    // post survey from surveyor dashboard
+   app.post("/survey", verifyToken, async (req, res) => {
+     const survey = req.body;
+     const surveyData = { ...survey, timestamp: Date.now() };
+     console.log(surveyData)
+     const result = surveysCollection.insertOne(survey);
+     res.send(result);
+   });
     // get all survey
     app.get("/surveys", async (req, res) => {
       const result = await surveysCollection.find().toArray();
@@ -205,6 +235,31 @@ async function run() {
           responses: data.responses,
         },
       };
+
+      const result = await surveysCollection.updateOne(
+        filter,
+        updatedData,
+        options
+      );
+      console.log(result);
+      res.send(result);
+    });
+    // // update surveys status after admin change the survey status
+    app.patch("/surveys/status/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      console.log("new status",id, data);
+      const filter = {
+        _id: new ObjectId(id),
+      };
+      const options = { upsert: true };
+      const updatedData = {
+        $set: {
+          surveyStatus: data.surveyStatus,
+          adminFeedback: data.adminFeedback,
+        },
+      };
+
       const result = await surveysCollection.updateOne(
         filter,
         updatedData,
