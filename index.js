@@ -62,7 +62,7 @@ async function run() {
     // for admins
     const verifyAdmin = async (req, res, next) => {
       const user = req.user;
-      console.log("user from verify admin",user)
+      console.log("user from verify admin", user);
       const query = { email: user?.email };
       const result = await usersCollection.findOne(query);
       if (!result || result?.role != "admin") {
@@ -70,12 +70,12 @@ async function run() {
       }
       next();
     };
-// for surveyor
+    // for surveyor
     const verifySurveyor = async (req, res, next) => {
       const user = req.user;
       const query = { email: user?.email };
       const result = await usersCollection.findOne(query);
-      if (!result || result?.role !="surveyor") {
+      if (!result || result?.role != "surveyor") {
         return res.status(401).send({ message: "unauthorized access" });
       }
       next();
@@ -160,6 +160,7 @@ async function run() {
     //   res.send(result);
     // });
     // update user role
+    // in admin
     app.put("/users/update/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -177,12 +178,13 @@ async function run() {
     // get all user
     // todo:verify admin
 
-    app.get("/users", verifyToken,verifyAdmin, async (req, res) => {
+    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
     // get specific user
-    app.get("/users/:email",verifyToken, async (req, res) => {
+    // why?
+    app.get("/users/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const result = await usersCollection.findOne({ email: email });
       res.send(result);
@@ -206,21 +208,21 @@ async function run() {
       });
     });
     // save payment info in payment collection
-    app.post("/payments",verifyToken,  async (req, res) => {
+    app.post("/payments", verifyToken, async (req, res) => {
       const payment = req.body;
       const result = await paymentsCollection.insertOne(payment);
       // todo: send email to booking owner
       res.send(result);
     });
     // get all payments
-    // get all survey
+    // in admin
     app.get("/payments", verifyToken, async (req, res) => {
       const result = await paymentsCollection.find().toArray();
       res.send(result);
     });
     // ------survey related api-------
     // post survey from surveyor dashboard
-    app.post("/survey", verifyToken, async (req, res) => {
+    app.post("/survey", verifyToken, verifySurveyor, async (req, res) => {
       const survey = req.body;
       const surveyData = { ...survey, timestamp: Date.now() };
       console.log(surveyData);
@@ -239,7 +241,7 @@ async function run() {
       res.send(result);
     });
     // update specific surveys after vote
-    app.put("/surveys/update/:id",verifyToken, async (req, res) => {
+    app.put("/surveys/update/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const data = req.body;
       console.log(id, data);
@@ -266,63 +268,78 @@ async function run() {
       res.send(result);
     });
 
+    // // update surveys after surveyor update it from survey list
+    app.put(
+      "/surveys/surveyorList/:id",
+      verifyToken,
+      verifySurveyor,
+      async (req, res) => {
+        const id = req.params.id;
+        const data = req.body;
+
+        const filter = {
+          _id: new ObjectId(id),
+        };
+
+        const updatedData = {
+          $set: {
+            category: data.category,
+            title: data.title,
+            description: data.description,
+            image: data.image,
+          },
+        };
+
+        const result = await surveysCollection.updateOne(filter, updatedData);
+        console.log(result);
+        res.send(result);
+      }
+    );
     // // update surveys status after admin change the survey status
-    app.put("/surveys/surveyorList/:id",verifyToken, async (req, res) => {
-      const id = req.params.id;
-      const data = req.body;
+    app.patch(
+      "/surveys/status/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        const data = req.body;
+        console.log("new status", id, data);
+        const filter = {
+          _id: new ObjectId(id),
+        };
+        const options = { upsert: true };
+        const updatedData = {
+          $set: {
+            surveyStatus: data.surveyStatus,
+            adminFeedback: data.adminFeedback,
+          },
+        };
 
-      const filter = {
-        _id: new ObjectId(id),
-      };
-
-      const updatedData = {
-        $set: {
-          category: data.category,
-          title: data.title,
-          description: data.description,
-          image: data.image,
-        },
-      };
-
-      const result = await surveysCollection.updateOne(filter, updatedData);
-      console.log(result);
-      res.send(result);
-    });
-    // // update surveys status after admin change the survey status
-    app.patch("/surveys/status/:id",verifyToken,async (req, res) => {
-      const id = req.params.id;
-      const data = req.body;
-      console.log("new status", id, data);
-      const filter = {
-        _id: new ObjectId(id),
-      };
-      const options = { upsert: true };
-      const updatedData = {
-        $set: {
-          surveyStatus: data.surveyStatus,
-          adminFeedback: data.adminFeedback,
-        },
-      };
-
-      const result = await surveysCollection.updateOne(
-        filter,
-        updatedData,
-        options
-      );
-      console.log(result);
-      res.send(result);
-    });
+        const result = await surveysCollection.updateOne(
+          filter,
+          updatedData,
+          options
+        );
+        console.log(result);
+        res.send(result);
+      }
+    );
     // get specific surveyor survey
-    // To-do: verify host here
-    app.get("/surveyor-survey/:email", verifyToken,verifySurveyor,async (req, res) => {
-      const email = req.params.email;
-      const result = await surveysCollection
-        .find({
-          surveyCreatorEmail: email,
-        })
-        .toArray();
-      res.send(result);
-    });
+    // : verify host here
+    app.get(
+      "/surveyor-survey/:email",
+      verifyToken,
+      verifySurveyor,
+      async (req, res) => {
+        const email = req.params.email;
+        const result = await surveysCollection
+          .find({
+            surveyCreatorEmail: email,
+          })
+          .toArray();
+        res.send(result);
+      }
+    );
     // // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     // console.log(
