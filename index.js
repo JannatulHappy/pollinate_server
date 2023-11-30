@@ -272,7 +272,8 @@ async function run() {
     app.put(
       "/surveys/surveyorList/:id",
       verifyToken,
-      verifySurveyor,
+
+      
       async (req, res) => {
         const id = req.params.id;
         const data = req.body;
