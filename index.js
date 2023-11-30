@@ -390,17 +390,12 @@ app.get("/", (req, res) => {
   res.send("Hello from Pollinate Server to vercel..");
 });
 app.use("/", router);
-// app.listen(port, () => {
-//   console.log(`Server is running on port ${port}`);
-//   // Connect to MongoDB when the server starts
-//   connectDB();
-// });
+
 const main = async () => {
   connectDB();
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
     // Connect to MongoDB when the server starts
-    
   });
 };
-main()
+main();
