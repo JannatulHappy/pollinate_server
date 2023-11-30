@@ -1,6 +1,7 @@
 const express = require("express");
-const app = express();
 require("dotenv").config();
+const app = express();
+
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
