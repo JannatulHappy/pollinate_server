@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-// Define the Survey schema
 const surveySchema = new mongoose.Schema({
   category: String,
   title: String,
@@ -10,23 +9,14 @@ const surveySchema = new mongoose.Schema({
   report: { type: Number, default: 0 },
   image: String,
   timestamp: { type: Date, default: Date.now },
-  surveyStatus: String,
+  surveyStatus: { type: String, default: "pending" },
   totalVote: { type: Number, default: 0 },
   surveyCreatedBy: String,
   surveyCreatorEmail: String,
   surveyCreatorImage: String,
-  questions: [
-    {
-      question1: String,
-    },
-    {
-      question2: String,
-    },
-    {
-      question3: String,
-    },
-  ],
-  feedback: {
+  questions: [Object],
+
+  Feedback: {
     type: [
       {
         proUserName: String,
@@ -35,20 +25,23 @@ const surveySchema = new mongoose.Schema({
         comment: String,
       },
     ],
-    default: [],
+    default: [], // Set the default value to an empty array
   },
-  responses: {
-    type: [
-      {
-        responseUserEmail: String,
-        answers: { question1: String, question2: String, question3: String },
+
+  responses: [
+    {
+      responseUserEmail: String,
+      answers: {
+        question1: String,
+        question2: String,
+        question3: String,
       },
-    ],
-    default: [],
-  },
+      default: [],
+    },
+  ],
+  adminFeedback: { type: String, default: "" },
 });
 
-// Create the Survey model
 const Survey = mongoose.model("Survey", surveySchema);
 
 module.exports = Survey;
